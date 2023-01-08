@@ -9,13 +9,20 @@ airflow-common:
     website: https://airflow.apache.org
     publisher: monk.io
     icon: https://airflow.apache.org/favicons/android-icon-192x192.png
+  connections:
+    database:
+      runnable: monk-airflow/airflow-db
+      service: db-svc
+    redis:
+      runnable: monk-airflow/airflow-redis
+      service: rds-svc
   variables:
     database_host:
       type: string
-      value: <- get-hostname("monk-airflow/airflow-db", "postgres") split(".dns.podman") join("")
+      value: <- connection-hostname("database") split(".dns.podman") join("")
     redis_host:
       type: string
-      value: <- get-hostname("monk-airflow/airflow-redis", "monk-airflow-redis") split(".dns.podman") join("")
+      value: <- connection-hostname("redis") split(".dns.podman") join("")
     airflow_core_executor:
       env: AIRFLOW__CORE__EXECUTOR
       type: string
@@ -78,7 +85,12 @@ airflow-redis:
   containers:
     monk-airflow-redis:
       image: redis:latest
-
+  services:
+    rds-svc:
+      port: 6379
+      container: monk-airflow-redis
+      protocol: tcp
+      host-port: 6379
 
 airflow-db: 
   defines: runnable
@@ -110,10 +122,14 @@ airflow-db:
     postgres:
       image-tag: <- `${image-tag}`
       paths:
-      - <- `${moncc-volume-path}/db_data:/var/lib/postgresql/data`
+        - <- `${moncc-volume-path}/db_data:/var/lib/postgresql/data`
       image: postgres
-      ports:
-      - <- `0.0.0.0:${db-port}:5432`
+  services:
+    db-svc:
+      port: 5432
+      container: postgres
+      protocol: tcp
+      host-port: 5432
 
 airflow-webserver:
   defines: runnable
@@ -124,7 +140,7 @@ airflow-webserver:
       image: apache/airflow
       bash: airflow webserver
       ports:
-        - <- `0.0.0.0:${webserver_port}:8080`
+        - 8080:8080
       paths:
         - <- `${volume_local}/dags:/opt/airflow/dags`
         - <- `${volume_local}/logs:/opt/airflow/logs`
@@ -135,7 +151,12 @@ airflow-webserver:
       period: 10
       initialDelay: 10
       interval: 5
-  
+  services:
+    webserver-svc:
+      port: 8080
+      container: monk-airflow-webserver
+      protocol: tcp
+      host-port: 8080
 
 airflow-scheduler:
   defines: runnable
