@@ -1,4 +1,4 @@
-namespace: monk-airflow
+namespace: airflow
 
 
 airflow-common:
@@ -11,10 +11,10 @@ airflow-common:
     icon: https://airflow.apache.org/favicons/android-icon-192x192.png
   connections:
     database:
-      runnable: monk-airflow/airflow-db
+      runnable: airflow/airflow-db
       service: db-svc
     redis:
-      runnable: monk-airflow/airflow-redis
+      runnable: airflow/airflow-redis
       service: rds-svc
   variables:
     database_host:
@@ -69,7 +69,7 @@ airflow-common:
       value: <- `${webserver_port}`
     volume_local:
       type: string
-      value: <- `${monk-volume-path}/monk-airflow`
+      value: <- `${monk-volume-path}/airflow`
     airflow_uuid:
       env: AIRFLOW_UUID
       type: string
@@ -77,18 +77,18 @@ airflow-common:
   depends:
     wait-for:
       runnables:
-        - monk-airflow/airflow-redis
-        - monk-airflow/airflow-db
+        - airflow/airflow-redis
+        - airflow/airflow-db
 
 airflow-redis:
   defines: runnable
   containers:
-    monk-airflow-redis:
+    airflow-redis:
       image: redis:latest
   services:
     rds-svc:
       port: 6379
-      container: monk-airflow-redis
+      container: airflow-redis
       protocol: tcp
       host-port: 6379
 
@@ -135,7 +135,7 @@ airflow-webserver:
   defines: runnable
   inherits: ./airflow-common
   containers:
-    monk-airflow-webserver:
+    airflow-webserver:
       user: "50000:0"
       image: apache/airflow
       bash: airflow webserver
@@ -154,7 +154,7 @@ airflow-webserver:
   services:
     webserver-svc:
       port: 8080
-      container: monk-airflow-webserver
+      container: airflow-webserver
       protocol: tcp
       host-port: 8080
 
@@ -162,7 +162,7 @@ airflow-scheduler:
   defines: runnable
   inherits: ./airflow-common
   containers:
-    monk-airflow-scheduler:
+    airflow-scheduler:
       user: "50000:0"
       image: apache/airflow
       bash: airflow scheduler
@@ -190,7 +190,7 @@ airflow-worker:
       type: string
       value: <- `${airflow_celery_broker_url}`
   containers:
-    monk-airflow-worker:
+    airflow-worker:
       user: "50000:0"
       image: apache/airflow
       bash: celery worker
@@ -210,7 +210,7 @@ airflow-triggerer:
   defines: runnable
   inherits: ./airflow-common
   containers:
-    monk-airflow-triggerer:
+    airflow-triggerer:
       user: "50000:0"
       image: apache/airflow
       bash: airflow triggerer
@@ -250,7 +250,7 @@ airflow-init:
       type: string
       value: ''
   containers:
-    monk-airflow-init:
+    airflow-init:
       user: "0:0"
       image: apache/airflow
       bash: /opt/airflow/init.sh
@@ -260,7 +260,7 @@ airflow-init:
         - <- `${volume_local}/plugins:/opt/airflow/plugins`
   files:
     airflow_init_script:
-      container: monk-airflow-init
+      container: airflow-init
       mode: 0755
       path: /opt/airflow/init.sh
       contents: <<< init.sh

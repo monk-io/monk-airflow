@@ -1,15 +1,15 @@
-namespace: monk-airflow
+namespace: airflow
 
 stack:
   defines: process-group
   runnable-list:
-    - monk-airflow/airflow-redis
-    - monk-airflow/airflow-db
-    - monk-airflow/airflow-webserver
-    - monk-airflow/airflow-scheduler
-    - monk-airflow/airflow-worker
-    - monk-airflow/airflow-triggerer
-    - monk-airflow/airflow-init
+    - airflow/airflow-redis
+    - airflow/airflow-db
+    - airflow/airflow-webserver
+    - airflow/airflow-scheduler
+    - airflow/airflow-worker
+    - airflow/airflow-triggerer
+    - airflow/airflow-init
   variables:
     database_name:
       type: string
