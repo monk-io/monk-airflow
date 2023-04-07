@@ -1,14 +1,23 @@
+---
 namespace: airflow
-
 
 airflow-common:
   metadata:
-    defines: metadata
-    name: Apache Airflow 
-    description: Platform created by the community to programmatically author, schedule and monitor workflows.
-    website: https://airflow.apache.org
+    name: Apache Airflow
+    description: |
+      Apache Airflow is an open-source platform used for creating, scheduling, and monitoring workflows.
+
+      It allows users to define and execute complex workflows, which can include tasks such as data processing, machine learning, and ETL (extract, transform, load) processes.
+
+      Airflow provides a web-based user interface for managing workflows, as well as a command-line interface for more advanced users. It also supports a wide range of integrations with other tools and services, such as databases, cloud platforms, and messaging systems.
+
+      Airflow is highly scalable and can be deployed on-premises or in the cloud, making it a popular choice for data engineering and data science teams.
+
+    website: https://airflow.apache.org/
     publisher: monk.io
     icon: https://airflow.apache.org/favicons/android-icon-192x192.png
+    private: true
+    version: 1.0
   connections:
     database:
       runnable: airflow/airflow-db
@@ -82,6 +91,14 @@ airflow-common:
 
 airflow-redis:
   defines: runnable
+  metadata:
+    name: Redis
+    description: Redis is an open source (BSD licensed), in-memory data structure store, used as a database, cache and message broker.
+    website: https://redis.io
+    publisher: monk.io
+    icon: https://cdn.icon-icons.com/icons2/2415/PNG/512/redis_original_wordmark_logo_icon_146369.png
+    private: true
+    version: 1.0
   containers:
     airflow-redis:
       image: redis:latest
@@ -92,8 +109,16 @@ airflow-redis:
       protocol: tcp
       host-port: 6379
 
-airflow-db: 
+airflow-db:
   defines: runnable
+  metadata:
+    name: PostgreSQL
+    description: PostgreSQL is a powerful, open source object-relational database system with over 30 years of active development that has earned it a strong reputation for reliability, feature robustness, and performance.
+    website: https://www.postgresql.org
+    publisher: monk.io
+    icon: https://www.postgresql.org/media/img/about/press/elephant.png
+    private: true
+    version: 1.0
   variables:
     defines: variables
     image-tag:
@@ -133,10 +158,10 @@ airflow-db:
 
 airflow-webserver:
   defines: runnable
-  inherits: ./airflow-common
+  inherits: airflow/airflow-common
   containers:
     airflow-webserver:
-      user: "50000:0"
+      user: 50000:0
       image: apache/airflow
       bash: airflow webserver
       ports:
@@ -147,7 +172,10 @@ airflow-webserver:
         - <- `${volume_local}/plugins:/opt/airflow/plugins`
   check:
     readiness:
-      code: ["curl", "--fail", "http://localhost:8080/health"]
+      code:
+        - curl
+        - --fail
+        - http://localhost:8080/health
       period: 10
       initialDelay: 10
       interval: 5
@@ -160,10 +188,10 @@ airflow-webserver:
 
 airflow-scheduler:
   defines: runnable
-  inherits: ./airflow-common
+  inherits: airflow/airflow-common
   containers:
     airflow-scheduler:
-      user: "50000:0"
+      user: 50000:0
       image: apache/airflow
       bash: airflow scheduler
       paths:
@@ -172,14 +200,15 @@ airflow-scheduler:
         - <- `${volume_local}/plugins:/opt/airflow/plugins`
   check:
     readiness:
-      code: ['airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      code:
+        - airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"
       period: 10
       initialDelay: 10
       interval: 5
 
 airflow-worker:
   defines: runnable
-  inherits: ./airflow-common
+  inherits: airflow/airflow-common
   variables:
     monk_dumb_init:
       env: DUMB_INIT_SETSID
@@ -191,7 +220,7 @@ airflow-worker:
       value: <- `${airflow_celery_broker_url}`
   containers:
     airflow-worker:
-      user: "50000:0"
+      user: 50000:0
       image: apache/airflow
       bash: celery worker
       paths:
@@ -200,18 +229,18 @@ airflow-worker:
         - <- `${volume_local}/plugins:/opt/airflow/plugins`
   check:
     readiness:
-      code: ['celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"']
+      code:
+        - celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"
       period: 10
       initialDelay: 10
       interval: 5
 
-
 airflow-triggerer:
   defines: runnable
-  inherits: ./airflow-common
+  inherits: airflow/airflow-common
   containers:
     airflow-triggerer:
-      user: "50000:0"
+      user: 50000:0
       image: apache/airflow
       bash: airflow triggerer
       paths:
@@ -220,14 +249,15 @@ airflow-triggerer:
         - <- `${volume_local}/plugins:/opt/airflow/plugins`
   check:
     readiness:
-      code: ['airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      code:
+        - airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"
       period: 10
       initialDelay: 10
       interval: 5
 
 airflow-init:
   defines: runnable
-  inherits: ./airflow-common
+  inherits: airflow/airflow-common
   variables:
     airflow_db_updare:
       env: _AIRFLOW_DB_UPGRADE
@@ -251,7 +281,7 @@ airflow-init:
       value: ''
   containers:
     airflow-init:
-      user: "0:0"
+      user: 0:0
       image: apache/airflow
       bash: /opt/airflow/init.sh
       paths:
