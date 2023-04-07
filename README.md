@@ -1,13 +1,16 @@
 # Apache Airflow & Monk
+
 This repository contains Monk.io template to deploy Apache Airflow either locally or on cloud of your choice (AWS, GCP, Azure, Digital Ocean).
 
 # Prerequisites
+
 - [Install Monk](https://docs.monk.io/docs/get-monk)
 - [Register and Login Monk](https://docs.monk.io/docs/acc-and-auth)
 - [Add Cloud Provider](https://docs.monk.io/docs/cloud-provider)
 - [Add Instance](https://docs.monk.io/docs/multi-cloud)
 
 #### Make sure monkd is running.
+
 ```bash
 foo@bar:~$ monk status
 daemon: ready
@@ -16,18 +19,20 @@ not connected to cluster
 ```
 
 ## Clone Repository
+
 ```bash
 git clone https://github.com/monk-io/airflow
 ```
 
 ## Load Template
+
 ```bash
 cd airflow
 monk load MANIFEST
 ```
 
-
 #### Let's take a look at the themes I have installed.
+
 ```bash
 foo@bar:~$ monk list airflow
 ✔ Got the list
@@ -44,6 +49,7 @@ group     airflow/stack              local       -        -
 ```
 
 ## Deploy Stack
+
 ```bash
 foo@bar:~$ monk run airflow/stack
 ? Select tag to run [local/airflow/stack] on: mnk
@@ -114,15 +120,15 @@ foo@bar:~$ monk run airflow/stack
 	monk do        local/airflow/stack/action_name - Run defined action (if exists)
 💡 Check monk help for more!
 ```
- 
- ## Check web service
 
- ```
+## Check web service
+
+```
 http://16.170.15.2:8080/
 ```
 
-
 ## Variables
+
 The variables are in `stack.yml` file. You can quickly setup by editing the values here.
 
 | Variable                     	| Description                               	|
@@ -134,8 +140,6 @@ The variables are in `stack.yml` file. You can quickly setup by editing the valu
 | webserver_port                | Airflow Proxy listen, Default 8080                     	|
 | airflow_password               | Airflow admin username, Default airflow                 	|
 | airflow_username               | Airflow admin password, Default airflow                 	|
-
-
 
 ## Stop, remove and clean up workloads and templates
 
