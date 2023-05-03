@@ -7,13 +7,9 @@ stack:
     name: Apache Airflow
     description: |
       Apache Airflow is an open-source platform used for creating, scheduling, and monitoring workflows.
-
       It allows users to define and execute complex workflows, which can include tasks such as data processing, machine learning, and ETL (extract, transform, load) processes.
-
       Airflow provides a web-based user interface for managing workflows, as well as a command-line interface for more advanced users. It also supports a wide range of integrations with other tools and services, such as databases, cloud platforms, and messaging systems.
-
       Airflow is highly scalable and can be deployed on-premises or in the cloud, making it a popular choice for data engineering and data science teams.
-
     website: https://airflow.apache.org/
     publisher: monk.io
     icon: https://airflow.apache.org/favicons/android-icon-192x192.png
@@ -36,9 +32,6 @@ stack:
     database_user:
       type: string
       value: airflow
-    database_port:
-      type: int
-      value: 5432
     airflow_username:
       type: string
       value: airflow
