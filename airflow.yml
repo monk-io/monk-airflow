@@ -224,6 +224,17 @@ airflow-worker:
       period: 10
       initialDelay: 10
       interval: 5
+  actions:
+    create-user:
+      arguments:
+        user:
+          description: User name
+          type: string
+        url:
+          description: User pass
+          type: string
+      code: exec("airflow-worker", "/bin/bash", "-c", `airflow users  create --role Admin --username ${args["user"]} --email admin --firstname admin --lastname admin --password ${args["pass"]}`)
+      description: Create the airflow user
 
 airflow-triggerer:
   defines: runnable
