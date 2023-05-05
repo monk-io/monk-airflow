@@ -232,7 +232,7 @@ airflow-worker:
         user:
           description: User name
           type: string
-        url:
+        pass:
           description: User pass
           type: string
       code: exec("airflow-worker", "/bin/bash", "-c", `airflow users  create --role Admin --username ${args["user"]} --email admin --firstname admin --lastname admin --password ${args["pass"]}`)
