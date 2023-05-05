@@ -20,17 +20,11 @@ airflow-common:
   connections:
     database:
       runnable: airflow/airflow-db
-      service: db-svc
+      service: db
     redis:
       runnable: airflow/airflow-redis
-      service: rds-svc
+      service: rds
   variables:
-    database_host:
-      type: string
-      value: <- connection-hostname("database")
-    redis_host:
-      type: string
-      value: <- connection-hostname("redis")
     db_user:
       env: POSTGRES_USER
       value: <- $database_user default("airflow")
@@ -50,15 +44,15 @@ airflow-common:
     airflow_database_sql_alchemy_conn:
       env: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
       type: string
-      value: <- "postgresql+psycopg2://" $db_user ":" $db_pass "@" $database_host "/" $db_name concat-all
+      value: <- "postgresql+psycopg2://" $db_user ":" $db_pass "@" connection-hostname("database") "/" $db_name concat-all
     airflow_celery_result_backend:
       env: AIRFLOW__CELERY__RESULT_BACKEND
       type: string
-      value: <- "db+postgresql://" $db_user ":" $db_pass "@" $database_host "/" $db_name concat-all
+      value: <- "db+postgresql://" $db_user ":" $db_pass "@" connection-hostname("database") "/" $db_name concat-all
     airflow_celery_broker_url:
       env: AIRFLOW__CELERY__BROKER_URL
       type: string
-      value: <- "redis://:@" $redis_host ":6379/0" concat-all
+      value: <- "redis://:@" connection-hostname("redis") ":6379/0" concat-all
     airflow_core_fernet_key:
       env: AIRFLOW__CORE__FERNET_KEY
       type: string
@@ -105,13 +99,13 @@ airflow-redis:
     version: 1.0
   containers:
     airflow-redis:
-      image: redis:latest
+      image: redis
+      image-tag: latest
   services:
-    rds-svc:
+    rds:
       port: 6379
       container: airflow-redis
       protocol: tcp
-      host-port: 6379
 
 airflow-db:
   defines: runnable
@@ -145,15 +139,14 @@ airflow-db:
   containers:
     postgres:
       image: postgres
-      image-tag: <- `${image-tag}`
+      image-tag: <- $image-tag
       paths:
         - <- `${monk-volume-path}/airflow/db_data:/var/lib/postgresql/data`
   services:
-    db-svc:
+    db:
       port: 5432
       container: postgres
       protocol: tcp
-      host-port: 5432
 
 airflow-webserver:
   defines: runnable
@@ -163,8 +156,6 @@ airflow-webserver:
       user: 50000:0
       image: apache/airflow
       bash: airflow webserver
-      ports:
-        - 8080:8080
       paths:
         - <- `${monk-volume-path}/airflow/dags:/opt/airflow/dags`
         - <- `${monk-volume-path}/airflow/logs:/opt/airflow/logs`
@@ -179,7 +170,7 @@ airflow-webserver:
       initialDelay: 10
       interval: 5
   services:
-    webserver-svc:
+    webserver:
       port: 8080
       container: airflow-webserver
       protocol: tcp
@@ -216,7 +207,7 @@ airflow-worker:
     monk_celery_broker_url:
       env: CELERY_BROKER_URL
       type: string
-      value: <- `${airflow_celery_broker_url}`
+      value: <- $airflow_celery_broker_url
   containers:
     airflow-worker:
       user: 50000:0
