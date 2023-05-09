@@ -103,6 +103,8 @@ airflow-redis:
     airflow-redis:
       image: redis
       image-tag: latest
+      environment:
+        - ALLOW_EMPTY_PASSWORD=yes
   services:
     rds:
       port: 6379
@@ -142,8 +144,6 @@ airflow-db:
     postgres:
       image: postgres
       image-tag: <- $image-tag
-      paths:
-        - <- `${monk-volume-path}/airflow/db_data:/var/lib/postgresql/data`
   services:
     db:
       port: 5432
