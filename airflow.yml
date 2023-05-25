@@ -17,7 +17,7 @@ airflow-common:
     icon: https://airflow.apache.org/favicons/android-icon-192x192.png
     private: true
     version: 1.0
-    tags: Airflow, data pipeline, workflow management, open-source, Python, DAGs, data integration, task orchestration, scheduling, ETL, data processing, Apache, distributed computing, data engineering
+    tags: task orchestration, scheduling, data processing, apache, workflow management, etl, airflow, dags, data pipeline, data engineering, open-source, distributed computing, python, data integration
     source: https://github.com/apache/airflow
   connections:
     database:
