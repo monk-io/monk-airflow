@@ -1,0 +1,208 @@
+---
+title: Apache Airflow
+description: Ready-to-run Apache Airflow container template for workflow orchestration and data pipeline management.
+primary_category: data-engineering
+tags: [airflow, workflow, orchestration, etl, template, runnable, data-pipeline, scheduler]
+integration_type: template
+hosting_models: [self-hosted]
+website_url: https://airflow.apache.org/
+docs_url: https://airflow.apache.org/docs/
+publisher: monk.io
+---
+
+## Overview
+
+This template provides a production‑ready Apache Airflow instance as a Monk runnable. You can:
+
+- Run it directly to get a managed workflow orchestration platform
+- Inherit it in your own data engineering infrastructure to schedule and monitor workflows
+
+Apache Airflow is a platform to programmatically author, schedule, and monitor workflows. It allows you to define workflows as Directed Acyclic Graphs (DAGs) of tasks, with rich scheduling and monitoring capabilities.
+
+## What this template manages
+
+- Airflow webserver and scheduler
+- PostgreSQL metadata database
+- Redis for Celery executor
+- Worker nodes for task execution
+- Triggerer for deferrable operators
+- Web UI on port 8080
+- DAG management and execution
+
+## Quick start (run directly)
+
+1) Load templates
+
+```bash
+monk load MANIFEST
+```
+
+2) Run Airflow stack
+
+```bash
+monk run airflow/stack
+```
+
+3) Customize credentials (recommended via inheritance)
+
+Running directly uses the defaults defined in this template's `variables`. Secrets added with `monk secrets add` will not affect this runnable unless you inherit it and reference those secrets.
+
+- Preferred: inherit and replace variables with `secret("...")` as shown below.
+- Alternative: fork/clone and edit the `variables` in `stack.yml`, then `monk load MANIFEST` and run.
+
+Once started, access Airflow UI at `http://localhost:8080`.
+
+Default credentials: `airflow` / `airflow` (change immediately in production!)
+
+## Configuration
+
+Key variables you can customize in this template:
+
+```yaml
+variables:
+  # Airflow credentials
+  airflow_username: "airflow"         # Web UI username
+  airflow_password: "..."             # Web UI password
+  webserver_port: 8080                # Web UI port
+  
+  # Database
+  database_user: "airflow"            # PostgreSQL user
+  database_password: "..."            # PostgreSQL password
+  database_name: "airflow"            # PostgreSQL database name
+```
+
+DAGs and logs are persisted under `${monk-volume-path}/airflow` on the host.
+
+## Use by inheritance (recommended for data pipelines)
+
+Inherit the Airflow stack in your application for workflow orchestration. Example:
+
+```yaml
+namespace: myapp
+orchestrator:
+  defines: process-group
+  inherits: airflow/stack
+  variables:
+    airflow_username:
+      value: <- secret("airflow-username")
+    airflow_password:
+      value: <- secret("airflow-password")
+    database_password:
+      value: <- secret("airflow-db-password")
+data-pipeline:
+  defines: runnable
+  containers:
+    pipeline:
+      image: myorg/data-pipeline
+  connections:
+    airflow:
+      runnable: orchestrator/airflow-webserver
+      service: webserver
+```
+
+Then set the secrets once and run your orchestrator:
+
+```bash
+monk secrets add -g airflow-username="admin"
+monk secrets add -g airflow-password="STRONG_PASSWORD"
+monk secrets add -g airflow-db-password="STRONG_DB_PASSWORD"
+monk run myapp/orchestrator
+```
+
+## Ports and connectivity
+
+- Service: `webserver` on TCP port `8080`
+- From other runnables in the same process group, use `connection-hostname("<connection-name>")` to resolve the Airflow host.
+
+## Persistence and configuration
+
+- DAGs: `${monk-volume-path}/airflow/dags:/opt/airflow/dags`
+- Logs: `${monk-volume-path}/airflow/logs:/opt/airflow/logs`
+- Plugins: `${monk-volume-path}/airflow/plugins:/opt/airflow/plugins`
+- You can drop DAG files into the `dags` path to deploy workflows.
+
+## Features
+
+- **DAG-based Workflows**: Define workflows as Python code
+- **Rich Scheduling**: Cron-based, interval-based, and event-based triggers
+- **Monitoring**: Web UI with DAG visualization and execution history
+- **Extensible**: 200+ operators and sensors (Spark, Kubernetes, AWS, GCP, etc.)
+- **Task Dependencies**: Complex task graphs with branching and conditions
+- **Retry Logic**: Automatic retry with exponential backoff
+- **SLA Monitoring**: Track and alert on SLA violations
+- **Connection Management**: Secure credential storage
+- **CeleryExecutor**: Distributed task execution across worker nodes
+
+## Creating DAGs
+
+Example DAG:
+
+```python
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime, timedelta
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+dag = DAG(
+    'example_dag',
+    default_args=default_args,
+    schedule_interval='@daily',
+)
+
+task1 = BashOperator(
+    task_id='print_date',
+    bash_command='date',
+    dag=dag,
+)
+
+task2 = BashOperator(
+    task_id='process_data',
+    bash_command='echo "Processing data"',
+    dag=dag,
+)
+
+task1 >> task2  # task1 must complete before task2
+```
+
+## Use cases
+
+Airflow excels at:
+- ETL/ELT pipelines
+- Data warehouse management
+- ML model training pipelines
+- Report generation
+- Data quality checks
+- Multi-cloud orchestration
+
+## Related templates
+
+- See other templates in this repository for complementary services
+- Combine with monitoring tools for observability
+- Integrate with your application stack as needed
+
+## Troubleshooting
+
+- If you changed `airflow_password` after initial setup, you may need to reset data volumes or update the user inside Airflow.
+- Ensure PostgreSQL and Redis are running before starting Airflow components.
+- Generate Fernet key for encrypting secrets:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+- Check logs:
+
+```bash
+monk logs -l 500 -f airflow/airflow-webserver
+monk logs -l 500 -f airflow/airflow-scheduler
+```
+
+- For task failures, check task logs in the Airflow UI
+- Monitor worker health in the UI: Admin → Workers
